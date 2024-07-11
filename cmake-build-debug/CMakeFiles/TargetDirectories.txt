@@ -1,3 +1,0 @@
-C:/Users/redeb/CLionProjects/TucanLightmapper/cmake-build-debug/CMakeFiles/TucanLightmapper.dir
-C:/Users/redeb/CLionProjects/TucanLightmapper/cmake-build-debug/CMakeFiles/edit_cache.dir
-C:/Users/redeb/CLionProjects/TucanLightmapper/cmake-build-debug/CMakeFiles/rebuild_cache.dir

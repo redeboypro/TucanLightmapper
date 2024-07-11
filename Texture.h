@@ -4,6 +4,7 @@
 
 #ifndef TEXTURE_H
 #define TEXTURE_H
+#include <format>
 #include <iostream>
 #include <vector>
 
@@ -26,7 +27,6 @@ class Texture final {
     [[nodiscard]] bool try_get_pixel_index(const int32_t x, const int32_t y, uint32_t &index) const {
         index = (y * width + x) * 4;
         if (index >= m_buffer.size() - 3 or index < 0) {
-            std::cerr << "Pixel is out of bounds" << std::endl;
             return false;
         }
         return true;

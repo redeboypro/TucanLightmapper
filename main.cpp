@@ -129,7 +129,7 @@ int main() {
     const int32_t proj_mat_location = shader->get_uniform_location(PROJ_MATRIX_TITLE);
 
     const int32_t albedo_location = shader->get_uniform_location(ALBEDO_MAP_TITLE);
-    const int32_t lm_location     = shader->get_uniform_location(LIGHT_MAP_TITLE);
+    const int32_t lightmap_location     = shader->get_uniform_location(LIGHT_MAP_TITLE);
 
     scene->load_albedo_from_file(ALBEDO_TEXTURE_FILENAME);
 
@@ -149,7 +149,7 @@ int main() {
         scene->bake_step();
 
         glUniform1i(albedo_location, 0);
-        glUniform1i(lm_location, 1);
+        glUniform1i(lightmap_location, 1);
 
         Shader::mat4(view_mat_location, cam->view());
         Shader::mat4(proj_mat_location, cam->projection);

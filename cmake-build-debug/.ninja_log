@@ -1,6 +1,0 @@
-# ninja log v5
-7	232	7424260236655079	build.ninja	e723aed1cce6fd6
-15	2639	7421447592108735	CMakeFiles/TucanLightmapper.dir/main.cpp.obj	cfa74cd78df4a479
-2639	3061	7421447596303904	TucanLightmapper.exe	5969a3ef05abeab6
-17	2232	7420650259586836	CMakeFiles/TucanLightmapper.dir/Display.cpp.obj	cd1503d19d46621b
-18	1961	7421447462044703	CMakeFiles/TucanLightmapper.dir/Scene.cpp.obj	db0a83c198108271
