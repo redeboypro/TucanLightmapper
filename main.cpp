@@ -124,7 +124,7 @@ int main() {
     const auto cam = new Camera(glm::radians(CAMERA_FOV), static_cast<float>(WIDTH) / HEIGHT);
     cam->location  = {0.0F, (mesh_bounds_min.y + mesh_bounds_max.y) * 0.5F, mesh_bounds_max.z + CAMERA_OFFSET};
 
-    const auto    scene             = new Scene(mesh.get(), SAMPLES_NUM);
+    const auto    scene             = new Scene(EMBREE, mesh.get(), SAMPLES_NUM);
     const int32_t view_mat_location = shader->get_uniform_location(VIEW_MATRIX_TITLE);
     const int32_t proj_mat_location = shader->get_uniform_location(PROJ_MATRIX_TITLE);
 

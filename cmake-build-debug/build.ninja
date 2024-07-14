@@ -12,7 +12,7 @@
 
 # =============================================================================
 # Project: TucanLightmapper
-# Configurations: Release
+# Configurations: Debug
 # =============================================================================
 
 #############################################
@@ -24,7 +24,7 @@ ninja_required_version = 1.5
 #############################################
 # Set configuration variable for custom commands.
 
-CONFIGURATION = Release
+CONFIGURATION = Debug
 # =============================================================================
 # Include auxiliary files.
 
@@ -39,7 +39,7 @@ include CMakeFiles/rules.ninja
 #############################################
 # Logical path to working directory; prefix for absolute paths.
 
-cmake_ninja_workdir = C$:/Users/redeb/CLionProjects/TucanLightmapper/cmake-build-release/
+cmake_ninja_workdir = C$:/Users/redeb/CLionProjects/TucanLightmapper/cmake-build-debug/
 # =============================================================================
 # Object build statements for EXECUTABLE target TucanLightmapper
 
@@ -49,30 +49,30 @@ cmake_ninja_workdir = C$:/Users/redeb/CLionProjects/TucanLightmapper/cmake-build
 
 build cmake_object_order_depends_target_TucanLightmapper: phony || CMakeFiles/TucanLightmapper.dir
 
-build CMakeFiles/TucanLightmapper.dir/main.cpp.obj: CXX_COMPILER__TucanLightmapper_unscanned_Release C$:/Users/redeb/CLionProjects/TucanLightmapper/main.cpp || cmake_object_order_depends_target_TucanLightmapper
+build CMakeFiles/TucanLightmapper.dir/main.cpp.obj: CXX_COMPILER__TucanLightmapper_unscanned_Debug C$:/Users/redeb/CLionProjects/TucanLightmapper/main.cpp || cmake_object_order_depends_target_TucanLightmapper
   DEP_FILE = CMakeFiles\TucanLightmapper.dir\main.cpp.obj.d
-  FLAGS = -O3 -DNDEBUG -std=gnu++23 -fdiagnostics-color=always
+  FLAGS = -g -std=gnu++23 -fdiagnostics-color=always
   INCLUDES = -IC:/Users/redeb/CLionProjects/TucanLightmapper/ThirdParty/glm -isystem D:/Embree/include
   OBJECT_DIR = CMakeFiles\TucanLightmapper.dir
   OBJECT_FILE_DIR = CMakeFiles\TucanLightmapper.dir
 
-build CMakeFiles/TucanLightmapper.dir/Scene.cpp.obj: CXX_COMPILER__TucanLightmapper_unscanned_Release C$:/Users/redeb/CLionProjects/TucanLightmapper/Scene.cpp || cmake_object_order_depends_target_TucanLightmapper
+build CMakeFiles/TucanLightmapper.dir/Scene.cpp.obj: CXX_COMPILER__TucanLightmapper_unscanned_Debug C$:/Users/redeb/CLionProjects/TucanLightmapper/Scene.cpp || cmake_object_order_depends_target_TucanLightmapper
   DEP_FILE = CMakeFiles\TucanLightmapper.dir\Scene.cpp.obj.d
-  FLAGS = -O3 -DNDEBUG -std=gnu++23 -fdiagnostics-color=always
+  FLAGS = -g -std=gnu++23 -fdiagnostics-color=always
   INCLUDES = -IC:/Users/redeb/CLionProjects/TucanLightmapper/ThirdParty/glm -isystem D:/Embree/include
   OBJECT_DIR = CMakeFiles\TucanLightmapper.dir
   OBJECT_FILE_DIR = CMakeFiles\TucanLightmapper.dir
 
-build CMakeFiles/TucanLightmapper.dir/Display.cpp.obj: CXX_COMPILER__TucanLightmapper_unscanned_Release C$:/Users/redeb/CLionProjects/TucanLightmapper/Display.cpp || cmake_object_order_depends_target_TucanLightmapper
+build CMakeFiles/TucanLightmapper.dir/Display.cpp.obj: CXX_COMPILER__TucanLightmapper_unscanned_Debug C$:/Users/redeb/CLionProjects/TucanLightmapper/Display.cpp || cmake_object_order_depends_target_TucanLightmapper
   DEP_FILE = CMakeFiles\TucanLightmapper.dir\Display.cpp.obj.d
-  FLAGS = -O3 -DNDEBUG -std=gnu++23 -fdiagnostics-color=always
+  FLAGS = -g -std=gnu++23 -fdiagnostics-color=always
   INCLUDES = -IC:/Users/redeb/CLionProjects/TucanLightmapper/ThirdParty/glm -isystem D:/Embree/include
   OBJECT_DIR = CMakeFiles\TucanLightmapper.dir
   OBJECT_FILE_DIR = CMakeFiles\TucanLightmapper.dir
 
-build CMakeFiles/TucanLightmapper.dir/ThirdParty/lodepng.cpp.obj: CXX_COMPILER__TucanLightmapper_unscanned_Release C$:/Users/redeb/CLionProjects/TucanLightmapper/ThirdParty/lodepng.cpp || cmake_object_order_depends_target_TucanLightmapper
+build CMakeFiles/TucanLightmapper.dir/ThirdParty/lodepng.cpp.obj: CXX_COMPILER__TucanLightmapper_unscanned_Debug C$:/Users/redeb/CLionProjects/TucanLightmapper/ThirdParty/lodepng.cpp || cmake_object_order_depends_target_TucanLightmapper
   DEP_FILE = CMakeFiles\TucanLightmapper.dir\ThirdParty\lodepng.cpp.obj.d
-  FLAGS = -O3 -DNDEBUG -std=gnu++23 -fdiagnostics-color=always
+  FLAGS = -g -std=gnu++23 -fdiagnostics-color=always
   INCLUDES = -IC:/Users/redeb/CLionProjects/TucanLightmapper/ThirdParty/glm -isystem D:/Embree/include
   OBJECT_DIR = CMakeFiles\TucanLightmapper.dir
   OBJECT_FILE_DIR = CMakeFiles\TucanLightmapper.dir\ThirdParty
@@ -85,8 +85,8 @@ build CMakeFiles/TucanLightmapper.dir/ThirdParty/lodepng.cpp.obj: CXX_COMPILER__
 #############################################
 # Link the executable TucanLightmapper.exe
 
-build TucanLightmapper.exe: CXX_EXECUTABLE_LINKER__TucanLightmapper_Release CMakeFiles/TucanLightmapper.dir/main.cpp.obj CMakeFiles/TucanLightmapper.dir/Scene.cpp.obj CMakeFiles/TucanLightmapper.dir/Display.cpp.obj CMakeFiles/TucanLightmapper.dir/ThirdParty/lodepng.cpp.obj | D$:/Embree/lib/embree4.lib
-  FLAGS = -O3 -DNDEBUG
+build TucanLightmapper.exe: CXX_EXECUTABLE_LINKER__TucanLightmapper_Debug CMakeFiles/TucanLightmapper.dir/main.cpp.obj CMakeFiles/TucanLightmapper.dir/Scene.cpp.obj CMakeFiles/TucanLightmapper.dir/Display.cpp.obj CMakeFiles/TucanLightmapper.dir/ThirdParty/lodepng.cpp.obj | D$:/Embree/lib/embree4.lib
+  FLAGS = -g
   LINK_LIBRARIES = D:/Embree/lib/embree4.lib  -lopengl32  -static  -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
   OBJECT_DIR = CMakeFiles\TucanLightmapper.dir
   POST_BUILD = cd .
@@ -100,7 +100,7 @@ build TucanLightmapper.exe: CXX_EXECUTABLE_LINKER__TucanLightmapper_Release CMak
 # Utility command for edit_cache
 
 build CMakeFiles/edit_cache.util: CUSTOM_COMMAND
-  COMMAND = C:\Windows\system32\cmd.exe /C "cd /D C:\Users\redeb\CLionProjects\TucanLightmapper\cmake-build-release && "C:\Program Files\CMake\bin\cmake-gui.exe" -SC:\Users\redeb\CLionProjects\TucanLightmapper -BC:\Users\redeb\CLionProjects\TucanLightmapper\cmake-build-release"
+  COMMAND = C:\Windows\system32\cmd.exe /C "cd /D C:\Users\redeb\CLionProjects\TucanLightmapper\cmake-build-debug && "C:\Program Files\CMake\bin\cmake-gui.exe" -SC:\Users\redeb\CLionProjects\TucanLightmapper -BC:\Users\redeb\CLionProjects\TucanLightmapper\cmake-build-debug"
   DESC = Running CMake cache editor...
   pool = console
   restat = 1
@@ -112,7 +112,7 @@ build edit_cache: phony CMakeFiles/edit_cache.util
 # Utility command for rebuild_cache
 
 build CMakeFiles/rebuild_cache.util: CUSTOM_COMMAND
-  COMMAND = C:\Windows\system32\cmd.exe /C "cd /D C:\Users\redeb\CLionProjects\TucanLightmapper\cmake-build-release && "C:\Program Files\CMake\bin\cmake.exe" --regenerate-during-build -SC:\Users\redeb\CLionProjects\TucanLightmapper -BC:\Users\redeb\CLionProjects\TucanLightmapper\cmake-build-release"
+  COMMAND = C:\Windows\system32\cmd.exe /C "cd /D C:\Users\redeb\CLionProjects\TucanLightmapper\cmake-build-debug && "C:\Program Files\CMake\bin\cmake.exe" --regenerate-during-build -SC:\Users\redeb\CLionProjects\TucanLightmapper -BC:\Users\redeb\CLionProjects\TucanLightmapper\cmake-build-debug"
   DESC = Running CMake to regenerate build system...
   pool = console
   restat = 1
@@ -130,7 +130,7 @@ build TucanLightmapper: phony TucanLightmapper.exe
 # =============================================================================
 
 #############################################
-# Folder: C:/Users/redeb/CLionProjects/TucanLightmapper/cmake-build-release
+# Folder: C:/Users/redeb/CLionProjects/TucanLightmapper/cmake-build-debug
 
 build all: phony TucanLightmapper.exe
 

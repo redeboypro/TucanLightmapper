@@ -3,6 +3,8 @@ project(TucanLightmapper)
 
 set(CMAKE_CXX_STANDARD 23)
 
+find_package(embree 4 REQUIRED)
+
 add_executable(TucanLightmapper
         main.cpp
         TucanGL.h
@@ -22,5 +24,4 @@ add_executable(TucanLightmapper
 
 include_directories(ThirdParty/glm)
 
-target_link_libraries(TucanLightmapper opengl32)
-target_link_libraries(TucanLightmapper -static)
+target_link_libraries(TucanLightmapper embree opengl32 -static)

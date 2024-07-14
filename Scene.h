@@ -11,6 +11,9 @@
 #include "Texture.h"
 #include "Triangle.h"
 
+#include <embree4/rtcore.h>
+#include <embree4/rtcore_ray.h>
+
 #define I32(VALUE)              static_cast<int32_t>(VALUE)
 #define DEFAULT_LIGHTMAP_SIZE   255
 #define DEFAULT_ITER_NUM        8
@@ -20,7 +23,18 @@
 constexpr glm::vec4 zero = {0.0F, 0.0F, 0.0F, 0.0F};
 constexpr glm::vec4 one  = {1.0F, 1.0F, 1.0F, 1.0F};
 
+typedef enum : uint8_t {
+    EMBREE,
+    INTERNAL
+} RAY_TRACING_MODE;
+
 class Scene {
+    RAY_TRACING_MODE m_mode;
+
+    RTCDevice   m_embree_device;
+    RTCScene    m_embree_scene;
+    RTCGeometry m_embree_mesh;
+
     std::mt19937                          random_engine;
     std::uniform_real_distribution<float> random_floats;
 
@@ -45,6 +59,7 @@ class Scene {
 
 public:
     Scene(
+        RAY_TRACING_MODE                    mode,
         Mesh *                              mesh,
         int32_t                             rays_per_texel,
         uint32_t                            width      = DEFAULT_LIGHTMAP_SIZE,
@@ -55,6 +70,8 @@ public:
             TexParameter{GL_TEXTURE_WRAP_S, GL_REPEAT},
             TexParameter{GL_TEXTURE_WRAP_T, GL_REPEAT}
         });
+
+    ~Scene();
 
     const Texture &lightmap_texture = m_lightmap_texture;
     const Texture &albedo_texture   = m_albedo_texture;

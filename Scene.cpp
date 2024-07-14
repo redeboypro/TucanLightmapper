@@ -13,15 +13,16 @@ glm::vec4 Scene::lerp_rgba(const glm::vec4 &a, const glm::vec4 &b, const float t
     };
 }
 
-Scene::Scene(Mesh *                              mesh,
+Scene::Scene(RAY_TRACING_MODE                    mode,
+             Mesh *                              mesh,
              int32_t                             rays_per_texel,
              uint32_t                            width,
              uint32_t                            height,
-             std::initializer_list<TexParameter> parameters) : m_lightmap_texture(width, height, parameters),
+             std::initializer_list<TexParameter> parameters) : m_mode(mode),
+                                                               m_lightmap_texture(width, height, parameters),
                                                                m_albedo_texture(width, height, parameters, COLOR_WHITE),
                                                                m_rays_per_texel(rays_per_texel) {
     m_mesh = mesh;
-
     std::random_device random_device;
     random_engine = std::mt19937(random_device());
     random_floats = std::uniform_real_distribution(0.0F, 1.0F);
@@ -62,6 +63,31 @@ Scene::Scene(Mesh *                              mesh,
     auto &first_tri = m_triangles[m_tri];
     m_tri_tex_min   = m_lightmap_texture.to_pixel_coords(first_tri.tex_min);
     m_tri_tex_max   = m_lightmap_texture.to_pixel_coords(first_tri.tex_max);
+
+    m_embree_device = rtcNewDevice(nullptr);
+    assert(m_embree_device && "Unable to create embree device.");
+
+    m_embree_scene = rtcNewScene(m_embree_device);
+    assert(m_embree_scene);
+
+    m_embree_mesh = rtcNewGeometry(m_embree_device, RTC_GEOMETRY_TYPE_TRIANGLE);
+    assert(mesh);
+
+    auto* vertex_buffer = static_cast<float*>(rtcSetNewGeometryBuffer(m_embree_mesh, RTC_BUFFER_TYPE_VERTEX, 0, RTC_FORMAT_FLOAT3, 3 * sizeof(float), vertices.size() / 3));
+    memcpy(vertex_buffer, vertices.data(), vertices.size() * sizeof(float));
+
+    auto* index_buffer = static_cast<uint32_t*>(rtcSetNewGeometryBuffer(m_embree_mesh, RTC_BUFFER_TYPE_INDEX, 0, RTC_FORMAT_UINT3, 3 * sizeof(uint32_t), indices.size() / 3));
+    memcpy(index_buffer, indices.data(), indices.size() * sizeof(uint32_t));
+
+    rtcCommitGeometry(m_embree_mesh);
+    rtcAttachGeometry(m_embree_scene, m_embree_mesh);
+    rtcCommitScene(m_embree_scene);
+}
+
+Scene::~Scene() {
+    rtcReleaseGeometry(m_embree_mesh);
+    rtcReleaseScene(m_embree_scene);
+    rtcReleaseDevice(m_embree_device);
 }
 
 void Scene::load_albedo_from_file(const std::string &file_name) {
@@ -97,17 +123,46 @@ void Scene::bake_step() {
                     float form_factor      = 0.5F + 0.5F * dot(normal, ray_dir);
                     float min_raycast_dist = FLT_MAX;
                     bool  intersected      = false;
-
                     int32_t cur_tri = 0;
-                    for (int32_t tri_bi = 0; tri_bi < m_triangles.size(); ++tri_bi) {
-                        if (m_tri == tri_bi) continue;
-                        if (Triangle &tri_b = m_triangles[tri_bi]; tri_b.try_raycast(
-                             ray_origin, ray_dir, cur_min_dist)) {
-                            intersected = true;
-                            if (min_raycast_dist > cur_min_dist) {
-                                min_raycast_dist = cur_min_dist;
-                                cur_tri          = tri_bi;
+
+                    switch (m_mode) {
+                        case EMBREE: {
+                            RTCRayHit ray_hit {};
+                            ray_hit.ray.org_x = ray_origin.x + ray_dir.x * 0.0001F;
+                            ray_hit.ray.org_y = ray_origin.y + ray_dir.y * 0.0001F;
+                            ray_hit.ray.org_z = ray_origin.z + ray_dir.z * 0.0001F;
+
+                            ray_hit.ray.dir_x = ray_dir.x;
+                            ray_hit.ray.dir_y = ray_dir.y;
+                            ray_hit.ray.dir_z = ray_dir.z;
+
+                            ray_hit.ray.mask = 0xFFFFFFFF;
+                            ray_hit.ray.tnear = 0.0F;
+                            ray_hit.ray.tfar = std::numeric_limits<float>::infinity();
+                            ray_hit.hit.geomID = RTC_INVALID_GEOMETRY_ID;
+
+                            rtcIntersect1(m_embree_scene, &ray_hit);
+
+                            if (ray_hit.hit.geomID != RTC_INVALID_GEOMETRY_ID) {
+                                cur_tri = static_cast<int32_t>(ray_hit.hit.primID);
+                                min_raycast_dist = ray_hit.ray.tfar;
+                                intersected = true;
                             }
+                            break;
+                        }
+                        case INTERNAL: {
+                            for (int32_t tri_bi = 0; tri_bi < m_triangles.size(); ++tri_bi) {
+                                if (m_tri == tri_bi) continue;
+                                if (Triangle &tri_b = m_triangles[tri_bi]; tri_b.try_raycast(
+                                 ray_origin, ray_dir, cur_min_dist)) {
+                                    intersected = true;
+                                    if (min_raycast_dist > cur_min_dist) {
+                                        min_raycast_dist = cur_min_dist;
+                                        cur_tri          = tri_bi;
+                                    }
+                                 }
+                            }
+                            break;
                         }
                     }
 
