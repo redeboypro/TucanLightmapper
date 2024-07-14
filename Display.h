@@ -12,7 +12,7 @@
 using WindowMessageCallback = LRESULT CALLBACK(HWND wndHandle, uint32_t msg, WPARAM wParam, LPARAM lParam);
 using TimePoint             = std::chrono::time_point<std::chrono::system_clock>;
 
-class Display {
+class Display final {
     HWND      m_hWND;
     HDC       m_hDC;
     HGLRC     m_hGLRC;

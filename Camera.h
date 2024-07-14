@@ -13,7 +13,7 @@ constexpr glm::vec3 unit_x = {1.0F, 0.0F, 0.0F};
 constexpr glm::vec3 unit_y = {0.0F, 1.0F, 0.0F};
 constexpr glm::vec3 unit_z = {0.0F, 0.0F, 1.0F};
 
-class Camera {
+class Camera final {
 public:
     Camera(
         const float fov,
@@ -21,12 +21,12 @@ public:
         const float near = 0.01F,
         const float far  = 100.0F)
         : location(0.0F),
+          projection(glm::perspective(fov, aspect_ratio, near, far)),
           m_front(-unit_z),
           m_right(unit_x),
           m_up(unit_y),
           m_pitch(0.0F),
-          m_yaw(0.0F),
-          projection(glm::perspective(fov, aspect_ratio, near, far)) {
+          m_yaw(0.0F) {
     }
 
     glm::vec3        location;
