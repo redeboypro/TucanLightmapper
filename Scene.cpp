@@ -204,25 +204,9 @@ void Scene::bake_step() {
             int32_t cur_tri          = 0;
 
 #ifdef _USE_EMBREE
-            RTCRayHit ray_hit{};
-            ray_hit.ray.org_x = ray_origin.x;
-            ray_hit.ray.org_y = ray_origin.y;
-            ray_hit.ray.org_z = ray_origin.z;
-
-            ray_hit.ray.dir_x = ray_dir.x;
-            ray_hit.ray.dir_y = ray_dir.y;
-            ray_hit.ray.dir_z = ray_dir.z;
-
-            ray_hit.ray.mask   = 0xFFFFFFFF;
-            ray_hit.ray.tnear  = 0.0F;
-            ray_hit.ray.tfar   = std::numeric_limits<float>::infinity();
-            ray_hit.hit.geomID = RTC_INVALID_GEOMETRY_ID;
-
-            rtcIntersect1(m_embree_scene, &ray_hit);
-
-            if (ray_hit.hit.geomID != RTC_INVALID_GEOMETRY_ID) {
-                cur_tri          = static_cast<int32_t>(ray_hit.hit.primID);
-                min_raycast_dist = ray_hit.ray.tfar;
+            if (auto [ray, hit] = embree_raycast(ray_origin, ray_dir); hit.geomID != RTC_INVALID_GEOMETRY_ID) {
+                cur_tri          = static_cast<int32_t>(hit.primID);
+                min_raycast_dist = ray.tfar;
                 intersected      = true;
             }
 #else
