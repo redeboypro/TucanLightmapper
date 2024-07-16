@@ -50,6 +50,7 @@ cmake_ninja_workdir = C$:/Users/redeb/CLionProjects/TucanLightmapper/cmake-build
 build cmake_object_order_depends_target_TucanLightmapper: phony || CMakeFiles/TucanLightmapper.dir
 
 build CMakeFiles/TucanLightmapper.dir/main.cpp.obj: CXX_COMPILER__TucanLightmapper_unscanned_Release C$:/Users/redeb/CLionProjects/TucanLightmapper/main.cpp || cmake_object_order_depends_target_TucanLightmapper
+  DEFINES = -D_USE_EMBREE
   DEP_FILE = CMakeFiles\TucanLightmapper.dir\main.cpp.obj.d
   FLAGS = -O3 -DNDEBUG -std=gnu++23 -fdiagnostics-color=always
   INCLUDES = -IC:/Users/redeb/CLionProjects/TucanLightmapper/ThirdParty/glm -isystem D:/Embree/include
@@ -57,6 +58,7 @@ build CMakeFiles/TucanLightmapper.dir/main.cpp.obj: CXX_COMPILER__TucanLightmapp
   OBJECT_FILE_DIR = CMakeFiles\TucanLightmapper.dir
 
 build CMakeFiles/TucanLightmapper.dir/Scene.cpp.obj: CXX_COMPILER__TucanLightmapper_unscanned_Release C$:/Users/redeb/CLionProjects/TucanLightmapper/Scene.cpp || cmake_object_order_depends_target_TucanLightmapper
+  DEFINES = -D_USE_EMBREE
   DEP_FILE = CMakeFiles\TucanLightmapper.dir\Scene.cpp.obj.d
   FLAGS = -O3 -DNDEBUG -std=gnu++23 -fdiagnostics-color=always
   INCLUDES = -IC:/Users/redeb/CLionProjects/TucanLightmapper/ThirdParty/glm -isystem D:/Embree/include
@@ -64,6 +66,7 @@ build CMakeFiles/TucanLightmapper.dir/Scene.cpp.obj: CXX_COMPILER__TucanLightmap
   OBJECT_FILE_DIR = CMakeFiles\TucanLightmapper.dir
 
 build CMakeFiles/TucanLightmapper.dir/Display.cpp.obj: CXX_COMPILER__TucanLightmapper_unscanned_Release C$:/Users/redeb/CLionProjects/TucanLightmapper/Display.cpp || cmake_object_order_depends_target_TucanLightmapper
+  DEFINES = -D_USE_EMBREE
   DEP_FILE = CMakeFiles\TucanLightmapper.dir\Display.cpp.obj.d
   FLAGS = -O3 -DNDEBUG -std=gnu++23 -fdiagnostics-color=always
   INCLUDES = -IC:/Users/redeb/CLionProjects/TucanLightmapper/ThirdParty/glm -isystem D:/Embree/include
@@ -71,6 +74,7 @@ build CMakeFiles/TucanLightmapper.dir/Display.cpp.obj: CXX_COMPILER__TucanLightm
   OBJECT_FILE_DIR = CMakeFiles\TucanLightmapper.dir
 
 build CMakeFiles/TucanLightmapper.dir/ThirdParty/lodepng.cpp.obj: CXX_COMPILER__TucanLightmapper_unscanned_Release C$:/Users/redeb/CLionProjects/TucanLightmapper/ThirdParty/lodepng.cpp || cmake_object_order_depends_target_TucanLightmapper
+  DEFINES = -D_USE_EMBREE
   DEP_FILE = CMakeFiles\TucanLightmapper.dir\ThirdParty\lodepng.cpp.obj.d
   FLAGS = -O3 -DNDEBUG -std=gnu++23 -fdiagnostics-color=always
   INCLUDES = -IC:/Users/redeb/CLionProjects/TucanLightmapper/ThirdParty/glm -isystem D:/Embree/include

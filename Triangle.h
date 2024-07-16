@@ -55,16 +55,16 @@ struct Triangle final {
         const auto &b_uv = b.uv;
         const auto &c_uv = c.uv;
 
-        const float tri_area = area(a_uv, b_uv, c_uv);
-        if (tri_area == 0) return false;
+        const float denom = area(a_uv, b_uv, c_uv);
+        if (denom == 0.0F) return false;
 
-        const float u = area(b_uv, c_uv, uv) / tri_area;
+        const float u = area(b_uv, c_uv, uv) / denom;
         if (u < 0) return false;
 
-        const float v = area(c_uv, a_uv, uv) / tri_area;
+        const float v = area(c_uv, a_uv, uv) / denom;
         if (v < 0) return false;
 
-        const float w = area(a_uv, b_uv, uv) / tri_area;
+        const float w = area(a_uv, b_uv, uv) / denom;
         if (w < 0) return false;
 
         pt = a.origin * u + b.origin * v + c.origin * w;
@@ -93,9 +93,7 @@ struct Triangle final {
         const float u = 1 - v - w;
         if (u < 0) return false;
 
-        uv += a.uv * u;
-        uv += b.uv * v;
-        uv += c.uv * w;
+        uv = a.uv * u + b.uv * v + c.uv * w;
         return true;
     }
 

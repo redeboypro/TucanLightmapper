@@ -5,7 +5,6 @@
 #ifndef TEXTURE_H
 #define TEXTURE_H
 #include <format>
-#include <iostream>
 #include <vector>
 
 #include "TucanGL.h"
@@ -25,11 +24,24 @@ class Texture final {
     uint32_t             m_width,  m_height;
 
     [[nodiscard]] bool try_get_pixel_index(const int32_t x, const int32_t y, uint32_t &index) const {
-        index = (y * width + x) * 4;
+        index = (y * m_width + x) * 4;
         if (index >= m_buffer.size() - 3 or index < 0) {
             return false;
         }
         return true;
+    }
+
+    void store() const {
+        glTexImage2D(
+             GL_TEXTURE_2D,
+             0,
+             GL_RGBA8,
+             static_cast<int32_t>(m_width),
+             static_cast<int32_t>(m_height),
+             0,
+             GL_RGBA,
+             GL_UNSIGNED_BYTE,
+             &m_buffer[0]);
     }
 
     static uint8_t rgbau8(const float value) {
@@ -39,7 +51,6 @@ class Texture final {
     static float rgbaf(const uint8_t value) {
         return static_cast<float>(value) / UINT8_MAX;
     }
-
 public:
     Texture(
         const uint32_t                      width,
@@ -56,24 +67,22 @@ public:
             glTexParameteri(GL_TEXTURE_2D, name, mode);
         }
 
-        glTexImage2D(
-                     GL_TEXTURE_2D,
-                     0,
-                     GL_RGBA8,
-                     static_cast<int32_t>(width),
-                     static_cast<int32_t>(height),
-                     0,
-                     GL_RGBA,
-                     GL_UNSIGNED_BYTE,
-                     nullptr);
+        store();
     }
 
     ~Texture() {
         destroy();
     }
 
-    const uint32_t &id    = m_id;
-    const uint32_t &width = m_width, height = m_height;
+    const uint32_t &id = m_id;
+
+    [[nodiscard]] uint32_t width() const {
+        return m_width;
+    }
+
+    [[nodiscard]] uint32_t height() const {
+        return m_height;
+    }
 
     void bind() const {
         glBindTexture(GL_TEXTURE_2D, m_id);
@@ -105,6 +114,37 @@ public:
             return true;
         }
         return false;
+    }
+
+    void antialias(const int32_t x, const int32_t y, glm::vec4 &result_col, const float st_denoise = 0.0F) const {
+        static glm::vec4 tmp_texel_col;
+        static float denoise;
+
+        denoise = st_denoise;
+        if (get_pixel(x - 1, y, tmp_texel_col) && tmp_texel_col.a >
+            0.0F) {
+            result_col += tmp_texel_col;
+            denoise++;
+        }
+        if (get_pixel(x + 1, y, tmp_texel_col) && tmp_texel_col.a >
+            0.0F) {
+            result_col += tmp_texel_col;
+            denoise++;
+        }
+        if (get_pixel(x, y - 1, tmp_texel_col) && tmp_texel_col.a >
+            0.0F) {
+            result_col += tmp_texel_col;
+            denoise++;
+        }
+        if (get_pixel(x, y + 1, tmp_texel_col) && tmp_texel_col.a >
+            0.0F) {
+            result_col += tmp_texel_col;
+            denoise++;
+        }
+        if (denoise > 0.0F) {
+            result_col /= denoise;
+            result_col.a = 1.0F;
+        }
     }
 
     void apply() {
@@ -140,24 +180,25 @@ public:
     void load(const std::string &file_name) {
         m_temp_buffer.clear();
         lodepng::decode(m_temp_buffer, m_width, m_height, file_name);
-        apply();
+        flush();
+        store();
     }
 
     void save(const std::string &file_name) const {
-        lodepng::encode(file_name, m_buffer, width, height);
+        lodepng::encode(file_name, m_buffer, m_width, m_height);
     }
 
     [[nodiscard]] glm::vec2 to_uv_coords(const int32_t x, const int32_t y) const {
         return {
-            (static_cast<float>(x) + 0.5F) / static_cast<float>(width),
-            (static_cast<float>(y) + 0.5F) / static_cast<float>(height)
+            (static_cast<float>(x) + 0.5F) / static_cast<float>(m_width),
+            (static_cast<float>(y) + 0.5F) / static_cast<float>(m_height)
         };
     }
 
     [[nodiscard]] glm::ivec2 to_pixel_coords(const glm::vec2 &st) const {
         return {
-            static_cast<int32_t>(st.s * static_cast<float>(width)),
-            static_cast<int32_t>(st.t * static_cast<float>(height))
+            static_cast<int32_t>(st.s * static_cast<float>(m_width)),
+            static_cast<int32_t>(st.t * static_cast<float>(m_height))
         };
     }
 
