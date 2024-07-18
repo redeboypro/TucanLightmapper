@@ -34,10 +34,10 @@
 
 #define SAMPLES_NUM                       128
 
-#define CAMERA_OFFSET                     5.0F
+#define CAMERA_OFFSET                     4.0F
 #define CAMERA_FOV                        45.0F
 
-#define LIGHT_DIRECTION                   0.0F, -2.0F, -1.0F
+#define LIGHT_DIRECTION                   0.0F, -0.3F, -1.0F
 
 std::string read_ascii(const std::string &file_name) {
     std::ifstream file(file_name);
@@ -134,7 +134,6 @@ int main() {
     const int32_t lightmap_location     = shader->get_uniform_location(LIGHT_MAP_TITLE);
 
     scene->load_albedo_from_file(ALBEDO_TEXTURE_FILENAME);
-    scene->bake_dir_light(glm::vec3 {LIGHT_DIRECTION});
 
     Texture::active(0);
     scene->albedo_texture.bind();
@@ -149,7 +148,7 @@ int main() {
         display->begin(delta_time);
         shader->use();
 
-        scene->bake_step();
+        scene->bake_step(glm::vec3 {LIGHT_DIRECTION});
 
         glUniform1i(albedo_location, 0);
         glUniform1i(lightmap_location, 1);

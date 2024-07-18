@@ -134,31 +134,7 @@ void Scene::load_albedo_from_file(const std::string &file_name) {
     m_albedo_texture.load(file_name);
 }
 
-void Scene::bake_dir_light(const glm::vec3 &light_dir) {
-    auto ray_dir = normalize(-light_dir);
-    for (auto &         [patch_tri, pixel_coords, normal, ray_origin] : m_patches) {
-        if (const float diff = dot(normal, ray_dir); diff > 0.0F) {
-            bool intersected = false;
-#ifdef _USE_EMBREE
-            intersected = embree_raycast(ray_origin, ray_dir).hit.geomID != RTC_INVALID_GEOMETRY_ID;
-#else
-            for (int32_t tri_bi = 0; tri_bi < m_triangles.size(); ++tri_bi) {
-                if (patch_tri == tri_bi) continue;
-                if (Triangle &tri_b = m_triangles[tri_bi]; tri_b.try_raycast(
-                ray_origin, ray_dir, cur_min_dist)) {
-                    intersected = true;
-                    break;
-                }
-            }
-#endif
-            if (!intersected) m_lightmap_texture.set_pixel(pixel_coords.x, pixel_coords.y, glm::vec4 {diff, diff, diff, 0.0F});
-        }
-    }
-
-    m_lightmap_texture.apply();
-}
-
-void Scene::bake_step() {
+void Scene::bake_step(const glm::vec3 &light_dir) {
     static float cur_min_dist;
     static glm::vec4 tmp_texel_col;
     static glm::vec4 result_col;
@@ -168,7 +144,7 @@ void Scene::bake_step() {
     }
 
     if (m_iter == m_iter_num) {
-        for (int32_t pass = 0; pass < DEFAULT_ANTIALIAS_PASS_NUM; ++pass) {
+        for (int32_t pass = 0; pass < ANTIALIAS_PASS_NUM; ++pass) {
             for (int32_t y = 0; y < m_lightmap_texture.height(); ++y) {
                 for (int32_t      x = 0; x < m_lightmap_texture.width(); ++x) {
                     if (glm::vec4 base_col; m_lightmap_texture.get_pixel(x, y, base_col) &&
@@ -181,6 +157,9 @@ void Scene::bake_step() {
             }
             m_lightmap_texture.apply();
         }
+        /*
+         * m_lightmap_texture.save("path\\to\\output\\lightmap");
+         */
         m_iter++;
         return;
     }
@@ -194,11 +173,12 @@ void Scene::bake_step() {
                                          random_floats(random_engine) * 2.0F - 1.0F
                                      });
 
-            if (dot(normal, ray_dir) < 0.0F) {
+            float cos_a = dot(normal, ray_dir);
+            if (cos_a < 0.0F) {
                 ray_dir = -ray_dir;
+                cos_a = -cos_a;
             }
 
-            float   form_factor      = 0.5F + 0.5F * dot(normal, ray_dir);
             float   min_raycast_dist = FLT_MAX;
             bool    intersected      = false;
             int32_t cur_tri          = 0;
@@ -222,10 +202,11 @@ void Scene::bake_step() {
                 }
             }
 #endif
-
             if (intersected) {
-                Triangle &tri = m_triangles[cur_tri];
-                if (glm::vec2 res_uv{}; tri.try_calculate_uv_from_pt(
+                Triangle &tri_b = m_triangles[cur_tri];
+                float     cos_b = -dot(tri_b.a.normal, ray_dir);
+                float form_factor = std::max(cos_a * cos_b, 0.0F);
+                if (glm::vec2 res_uv{}; tri_b.try_calculate_uv_from_pt(
                                                                      ray_origin + min_raycast_dist * ray_dir,
                                                                      res_uv)) {
                     if (auto lightmap_pixel_coords = m_lightmap_texture.to_pixel_coords(res_uv);
@@ -235,18 +216,21 @@ void Scene::bake_step() {
                         if (glm::vec4 albedo_col; m_albedo_texture.get_pixel(
                                                                              albedo_pixel_coords.x,
                                                                              albedo_pixel_coords.y, albedo_col)) {
-                            mul_col += tmp_texel_col * lerp_rgba(one, albedo_col, m_texel_power) * form_factor;
+                            mul_col += tmp_texel_col * albedo_col * glm::vec4{SKY_COLOR} * form_factor;
                         }
                     }
                 }
             } else {
-                mul_col += glm::vec4{m_light_intensity * form_factor};
+                float cos_b = 0.5F + 0.5F * -dot(light_dir, ray_dir);
+                float form_factor = std::max(cos_a * cos_b, 0.0F);
+                mul_col += glm::vec4{m_light_intensity} * form_factor;
             }
         }
         mul_col /= static_cast<float>(m_rays_per_texel);
+        mul_col.a = 1.0F;
 
         if (glm::vec4 src_col; m_lightmap_texture.get_pixel(pixel_coords.x, pixel_coords.y, src_col)) {
-            result_col = clamp(src_col + mul_col, zero, one);
+            result_col = clamp(mul_col + src_col, zero, one);
             m_lightmap_texture.antialias(pixel_coords.x, pixel_coords.y, result_col, 1.0F);
             m_lightmap_texture.set_pixel(pixel_coords.x, pixel_coords.y, result_col);
         }
