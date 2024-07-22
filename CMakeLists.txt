@@ -22,8 +22,6 @@ add_executable(TucanLightmapper
         ThirdParty/lodepng.h
 )
 
-add_definitions(-D_USE_EMBREE)
-
 include_directories(ThirdParty/glm)
 
 target_link_libraries(TucanLightmapper embree opengl32 -static)

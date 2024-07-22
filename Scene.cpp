@@ -4,7 +4,25 @@
 
 #include "Scene.h"
 
-RTCRayHit Scene::embree_raycast(const glm::vec3 &ray_origin, const glm::vec3 &ray_dir) const {
+glm::vec3 Scene::get_perp_vec(const glm::vec3 &u) {
+    const glm::vec3 a  = glm::abs(u);
+    const uint32_t  xm = a.x - a.y < 0 && a.x - a.z < 0 ? 1 : 0;
+    const uint32_t  ym = a.y - a.z < 0 ? 1 ^ xm : 0;
+    const uint32_t  zm = 1 ^ (xm | ym);
+    return cross(u, glm::vec3(xm, ym, zm));
+}
+
+glm::vec3 Scene::get_cos_hemisphere_sample(const glm::vec3 &normal) {
+    const auto      rand  = glm::vec2{random_floats(random_engine), random_floats(random_engine)};
+    const glm::vec3 bitan = get_perp_vec(normal);
+    const glm::vec3 tan   = cross(bitan, normal);
+    const float     r     = std::sqrt(rand.x);
+    const float     phi   = 2.0F * 3.14159265F * rand.y;
+    return tan * (r * glm::cos(phi)) + bitan * (r * glm::sin(phi)) + normal * glm::sqrt(1 - rand.x);
+}
+
+RTCRayHit Scene::embree_raycast(const glm::vec3 &ray_origin, const glm::vec3 &ray_dir, const float &tmin,
+                                const float &    tmax) const {
     RTCRayHit ray_hit{};
     ray_hit.ray.org_x = ray_origin.x;
     ray_hit.ray.org_y = ray_origin.y;
@@ -14,13 +32,18 @@ RTCRayHit Scene::embree_raycast(const glm::vec3 &ray_origin, const glm::vec3 &ra
     ray_hit.ray.dir_y = ray_dir.y;
     ray_hit.ray.dir_z = ray_dir.z;
 
-    ray_hit.ray.mask   = 0xFFFFFFFF;
-    ray_hit.ray.tnear  = 0.0F;
-    ray_hit.ray.tfar   = std::numeric_limits<float>::infinity();
+    ray_hit.ray.mask  = 0xFFFFFFFF;
+    ray_hit.ray.tnear = tmin;
+    ray_hit.ray.tfar  = tmax;
+
     ray_hit.hit.geomID = RTC_INVALID_GEOMETRY_ID;
 
     rtcIntersect1(m_embree_scene, &ray_hit);
     return ray_hit;
+}
+
+glm::vec3 Scene::project_on_plane(const glm::vec3 &normal, const glm::vec3 &pt) {
+    return pt + dot(-pt, normal) * normal;
 }
 
 glm::vec4 Scene::lerp_rgba(const glm::vec4 &a, const glm::vec4 &b, const float t) {
@@ -32,13 +55,15 @@ glm::vec4 Scene::lerp_rgba(const glm::vec4 &a, const glm::vec4 &b, const float t
     };
 }
 
-Scene::Scene(Mesh *                              mesh,
+Scene::Scene(const glm::vec3 &                   light_dir,
+             Mesh *                              mesh,
              int32_t                             rays_per_texel,
              uint32_t                            width,
              uint32_t                            height,
              std::initializer_list<TexParameter> parameters) : m_lightmap_texture(width, height, parameters),
                                                                m_albedo_texture(width, height, parameters, COLOR_WHITE),
-                                                               m_rays_per_texel(rays_per_texel) {
+                                                               m_rays_per_texel(rays_per_texel),
+                                                               m_light_main_dir(light_dir) {
     m_mesh = mesh;
     std::random_device random_device;
     random_engine = std::mt19937(random_device());
@@ -78,15 +103,13 @@ Scene::Scene(Mesh *                              mesh,
         m_triangles.emplace_back(a, b, c);
     }
 
-    for (auto tri_i = 0; tri_i < m_triangles.size(); ++tri_i) {
-        auto &tri         = m_triangles[tri_i];
-        auto  tri_tex_min = m_lightmap_texture.to_pixel_coords(tri.tex_min);
-        auto  tri_tex_max = m_lightmap_texture.to_pixel_coords(tri.tex_max);
-        for (int32_t y = tri_tex_min.y; y <= tri_tex_max.y; ++y) {
-            for (int32_t x = tri_tex_min.x; x <= tri_tex_max.x; ++x) {
-                if (Patch patch {
-                    .tri = tri_i,
-                    .pixel_coords {x, y},
+    for (auto &tri: m_triangles) {
+        auto tri_tex_min = m_lightmap_texture.to_pixel_coords(tri.tex_min);
+        auto tri_tex_max = m_lightmap_texture.to_pixel_coords(tri.tex_max);
+        for (int32_t y = tri_tex_min.y - 1; y <= tri_tex_max.y; ++y) {
+            for (int32_t  x = tri_tex_min.x - 1; x <= tri_tex_max.x; ++x) {
+                if (Patch patch{
+                    .pixel_coords{x, y},
                     .normal = tri.a.normal,
                 }; tri.try_calculate_pt_from_uv(m_lightmap_texture.to_uv_coords(x, y), patch.world_coords)) {
                     patch.world_coords += patch.normal * NEAR_CLIP;
@@ -95,8 +118,6 @@ Scene::Scene(Mesh *                              mesh,
             }
         }
     }
-
-#ifdef _USE_EMBREE
     m_embree_device = rtcNewDevice(nullptr);
     assert(m_embree_device && "Unable to create embree device.");
 
@@ -119,123 +140,76 @@ Scene::Scene(Mesh *                              mesh,
     rtcCommitGeometry(m_embree_mesh);
     rtcAttachGeometry(m_embree_scene, m_embree_mesh);
     rtcCommitScene(m_embree_scene);
-#endif
 }
 
 Scene::~Scene() {
-#ifdef _USE_EMBREE
     rtcReleaseGeometry(m_embree_mesh);
     rtcReleaseScene(m_embree_scene);
     rtcReleaseDevice(m_embree_device);
-#endif
 }
 
 void Scene::load_albedo_from_file(const std::string &file_name) {
     m_albedo_texture.load(file_name);
 }
 
-void Scene::bake_step(const glm::vec3 &light_dir) {
-    static float cur_min_dist;
-    static glm::vec4 tmp_texel_col;
+void Scene::bake() {
     static glm::vec4 result_col;
+    for (int32_t iter = 0; iter < ITER_NUM; ++iter) {
+        auto denom = static_cast<float>(iter);
+        for (auto &[pixel_coords, normal, ray_origin]: m_patches) {
+            float total_occlusion = 0.0F;
+            for (int32_t ri = 0; ri < m_rays_per_texel; ri++) {
+                auto ray_dir = normalize(get_cos_hemisphere_sample(normal));
 
-    if (m_iter > m_iter_num) {
-        return;
-    }
+                if (dot(ray_dir, normal) < 0.0F) {
+                    ray_dir = -ray_dir;
+                }
 
-    if (m_iter == m_iter_num) {
-        for (int32_t pass = 0; pass < ANTIALIAS_PASS_NUM; ++pass) {
-            for (int32_t y = 0; y < m_lightmap_texture.height(); ++y) {
-                for (int32_t      x = 0; x < m_lightmap_texture.width(); ++x) {
-                    if (glm::vec4 base_col; m_lightmap_texture.get_pixel(x, y, base_col) &&
-                        base_col.a == 0.0F) {
-                        result_col = {};
-                        m_lightmap_texture.antialias(x, y, result_col);
-                        m_lightmap_texture.set_pixel(x, y, result_col);
-                    }
+                if (auto [ray, hit] = embree_raycast(ray_origin, ray_dir, NEAR_CLIP, AO_RADIUS); OCCLUDED(hit.geomID)) {
+                    total_occlusion++;
                 }
             }
-            m_lightmap_texture.apply();
-        }
-        /*
-         * m_lightmap_texture.save("path\\to\\output\\lightmap");
-         */
-        m_iter++;
-        return;
-    }
+            total_occlusion = 1.0F - total_occlusion / static_cast<float>(m_rays_per_texel);
+            float occlusion = 0.0F;
+            for (int i = 0; i < DIR_SAMPLES; ++i) {
+                glm::vec3 light_dir = m_light_main_dir + glm::vec3(
+                                                                   random_floats(random_engine) * SOFTNESS,
+                                                                   random_floats(random_engine) * SOFTNESS,
+                                                                   random_floats(random_engine) * SOFTNESS
+                                                                  );
+                light_dir = normalize(light_dir);
 
-    for (auto &[patch_tri, pixel_coords, normal, ray_origin] : m_patches) {
-        glm::vec4 mul_col{};
-        for (int32_t ri = 0; ri < m_rays_per_texel; ri++) {
-            auto ray_dir = normalize(glm::vec3{
-                                         random_floats(random_engine) * 2.0F - 1.0F,
-                                         random_floats(random_engine) * 2.0F - 1.0F,
-                                         random_floats(random_engine) * 2.0F - 1.0F
-                                     });
-
-            float cos_a = dot(normal, ray_dir);
-            if (cos_a < 0.0F) {
-                ray_dir = -ray_dir;
-                cos_a = -cos_a;
-            }
-
-            float   min_raycast_dist = FLT_MAX;
-            bool    intersected      = false;
-            int32_t cur_tri          = 0;
-
-#ifdef _USE_EMBREE
-            if (auto [ray, hit] = embree_raycast(ray_origin, ray_dir); hit.geomID != RTC_INVALID_GEOMETRY_ID) {
-                cur_tri          = static_cast<int32_t>(hit.primID);
-                min_raycast_dist = ray.tfar;
-                intersected      = true;
-            }
-#else
-            for (int32_t tri_bi = 0; tri_bi < m_triangles.size(); ++tri_bi) {
-                if (patch_tri == tri_bi) continue;
-                if (Triangle &tri_b = m_triangles[tri_bi]; tri_b.try_raycast(
-                    ray_origin, ray_dir, cur_min_dist)) {
-                    intersected = true;
-                    if (min_raycast_dist > cur_min_dist) {
-                        min_raycast_dist = cur_min_dist;
-                        cur_tri          = tri_bi;
-                    }
+                if (OCCLUDED(embree_raycast(ray_origin, -light_dir, NEAR_CLIP, FLT_MAX).hit.geomID)) {
+                    occlusion++;
                 }
             }
-#endif
-            if (intersected) {
-                Triangle &tri_b = m_triangles[cur_tri];
-                float     cos_b = -dot(tri_b.a.normal, ray_dir);
-                float form_factor = std::max(cos_a * cos_b, 0.0F);
-                if (glm::vec2 res_uv{}; tri_b.try_calculate_uv_from_pt(
-                                                                     ray_origin + min_raycast_dist * ray_dir,
-                                                                     res_uv)) {
-                    if (auto lightmap_pixel_coords = m_lightmap_texture.to_pixel_coords(res_uv);
-                        m_lightmap_texture.get_pixel(lightmap_pixel_coords.x, lightmap_pixel_coords.y,
-                                                     tmp_texel_col)) {
-                        auto albedo_pixel_coords = m_albedo_texture.to_pixel_coords(res_uv);
-                        if (glm::vec4 albedo_col; m_albedo_texture.get_pixel(
-                                                                             albedo_pixel_coords.x,
-                                                                             albedo_pixel_coords.y, albedo_col)) {
-                            mul_col += tmp_texel_col * albedo_col * glm::vec4{SKY_COLOR} * form_factor;
-                        }
-                    }
-                }
-            } else {
-                float cos_b = 0.5F + 0.5F * -dot(light_dir, ray_dir);
-                float form_factor = std::max(cos_a * cos_b, 0.0F);
-                mul_col += glm::vec4{m_light_intensity} * form_factor;
-            }
-        }
-        mul_col /= static_cast<float>(m_rays_per_texel);
-        mul_col.a = 1.0F;
+            float diffuse       = std::max(dot(normal, -m_light_main_dir), 0.0F);
+            float shadow_factor = 1.0F - occlusion / DIR_SAMPLES;
+            total_occlusion *= shadow_factor * diffuse + AMBIENT_INTENSITY;
+            auto delta_col = glm::vec4{total_occlusion, total_occlusion, total_occlusion, 1.0F};
 
-        if (glm::vec4 src_col; m_lightmap_texture.get_pixel(pixel_coords.x, pixel_coords.y, src_col)) {
-            result_col = clamp(mul_col + src_col, zero, one);
-            m_lightmap_texture.antialias(pixel_coords.x, pixel_coords.y, result_col, 1.0F);
-            m_lightmap_texture.set_pixel(pixel_coords.x, pixel_coords.y, result_col);
+            glm::vec4 total_col;
+            m_lightmap_texture.get_pixel(pixel_coords.x, pixel_coords.y, total_col);
+            m_lightmap_texture.set_pixel(pixel_coords.x, pixel_coords.y,
+                                         clamp((denom * total_col + delta_col) / (denom + 1), zero, one));
         }
+        m_lightmap_texture.apply();
     }
 
-    m_lightmap_texture.apply();
-    m_iter++;
+    for (int32_t pass = 0; pass < ANTIALIAS_PASS_NUM; ++pass) {
+        for (int32_t y = 0; y < m_lightmap_texture.height(); ++y) {
+            for (int32_t      x = 0; x < m_lightmap_texture.width(); ++x) {
+                if (glm::vec4 base_col; m_lightmap_texture.get_pixel(x, y, base_col) &&
+                                        base_col.a < 1.0F) {
+                    result_col = {};
+                    m_lightmap_texture.antialias(x, y, result_col, 0.0F);
+                    m_lightmap_texture.set_pixel(x, y, result_col);
+                }
+            }
+        }
+        m_lightmap_texture.apply();
+    }
+    /*
+     * m_lightmap_texture.save("path\\to\\output\\lightmap");
+     */
 }

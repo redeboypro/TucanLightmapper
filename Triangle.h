@@ -71,32 +71,6 @@ struct Triangle final {
         return true;
     }
 
-    bool try_calculate_uv_from_pt(const glm::vec3 &pt, glm::vec2 &uv) const {
-        const auto av = b.origin - a.origin;
-        const auto bv = c.origin - a.origin;
-        const auto cv = pt - a.origin;
-
-        const float d00 = dot(av, av);
-        const float d01 = dot(av, bv);
-        const float d11 = dot(bv, bv);
-        const float d20 = dot(cv, av);
-        const float d21 = dot(cv, bv);
-
-        const float denom = d00 * d11 - d01 * d01;
-
-        const float v = (d11 * d20 - d01 * d21) / denom;
-        if (v < 0) return false;
-
-        const float w = (d00 * d21 - d01 * d20) / denom;
-        if (w < 0) return false;
-
-        const float u = 1 - v - w;
-        if (u < 0) return false;
-
-        uv = a.uv * u + b.uv * v + c.uv * w;
-        return true;
-    }
-
     constexpr const Vertex &operator[](const size_t index) const {
         constexpr const Vertex Triangle::*accessors[] = {
             &Triangle::a,

@@ -14,6 +14,7 @@
 #define SHADER_VERTEX_ATTRIB_TITLE        "origin"
 #define SHADER_TEXTURE_COORD_ATTRIB_TITLE "uv"
 #define VIEW_MATRIX_TITLE                 "view_mat"
+#define MODEL_MATRIX_TITLE                "model_mat"
 #define PROJ_MATRIX_TITLE                 "proj_mat"
 #define ALBEDO_MAP_TITLE                  "main_tex"
 #define LIGHT_MAP_TITLE                   "lightmap_tex"
@@ -21,8 +22,8 @@
 #define RESOURCES_FOLDER                  "resources\\"
 #define VERTEX_SHADER_FILEPATH            RESOURCES_FOLDER "vert.glsl"
 #define FRAGMENT_SHADER_FILEPATH          RESOURCES_FOLDER "frag.glsl"
-#define MESH_FILENAME                     RESOURCES_FOLDER "mesh.bin"
-#define ALBEDO_TEXTURE_FILENAME           RESOURCES_FOLDER "albedo.png"
+#define MESH_FILENAME                     RESOURCES_FOLDER "mesh_1.bin"
+#define ALBEDO_TEXTURE_FILENAME           RESOURCES_FOLDER "checker.png"
 
 #define GL_ENABLE_FLAGS                   glEnable(GL_DEPTH_TEST);                            \
                                           glEnable(GL_CULL_FACE);                             \
@@ -32,12 +33,12 @@
 #define GL_CLEAN_UP                       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); \
                                           glClearColor(1.0F, 1.0F, 1.0F, 1.0F)
 
-#define SAMPLES_NUM                       128
+#define SAMPLES_NUM                       256
 
-#define CAMERA_OFFSET                     4.0F
+#define CAMERA_OFFSET                     3.0F
 #define CAMERA_FOV                        45.0F
 
-#define LIGHT_DIRECTION                   0.0F, -0.3F, -1.0F
+#define LIGHT_DIRECTION                   0.5F, -1.0F, -1.0F
 
 std::string read_ascii(const std::string &file_name) {
     std::ifstream file(file_name);
@@ -126,9 +127,10 @@ int main() {
     const auto cam = new Camera(glm::radians(CAMERA_FOV), static_cast<float>(WIDTH) / HEIGHT);
     cam->location  = {0.0F, (mesh_bounds_min.y + mesh_bounds_max.y) * 0.5F, mesh_bounds_max.z + CAMERA_OFFSET};
 
-    const auto    scene             = new Scene(mesh.get(), SAMPLES_NUM);
-    const int32_t view_mat_location = shader->get_uniform_location(VIEW_MATRIX_TITLE);
-    const int32_t proj_mat_location = shader->get_uniform_location(PROJ_MATRIX_TITLE);
+    const auto    scene              = new Scene(glm::vec3{LIGHT_DIRECTION}, mesh.get(), SAMPLES_NUM);
+    const int32_t view_mat_location  = shader->get_uniform_location(VIEW_MATRIX_TITLE);
+    const int32_t model_mat_location = shader->get_uniform_location(MODEL_MATRIX_TITLE);
+    const int32_t proj_mat_location  = shader->get_uniform_location(PROJ_MATRIX_TITLE);
 
     const int32_t albedo_location = shader->get_uniform_location(ALBEDO_MAP_TITLE);
     const int32_t lightmap_location     = shader->get_uniform_location(LIGHT_MAP_TITLE);
@@ -141,6 +143,9 @@ int main() {
     Texture::active(1);
     scene->lightmap_texture.bind();
 
+    scene->bake();
+
+    float angle = 0.0F;
     while (display->running) {
         GL_CLEAN_UP;
 
@@ -148,12 +153,14 @@ int main() {
         display->begin(delta_time);
         shader->use();
 
-        scene->bake_step(glm::vec3 {LIGHT_DIRECTION});
+        angle += delta_time * 15.0F;
+        if (angle >= 360.0F) angle = 0.0F;
 
         glUniform1i(albedo_location, 0);
         glUniform1i(lightmap_location, 1);
 
         Shader::mat4(view_mat_location, cam->view());
+        Shader::mat4(model_mat_location, rotate(glm::identity<glm::mat4>(), glm::radians(angle), glm::vec3{0.0F, 1.0F, 0.0F}));
         Shader::mat4(proj_mat_location, cam->projection);
 
         mesh->draw();

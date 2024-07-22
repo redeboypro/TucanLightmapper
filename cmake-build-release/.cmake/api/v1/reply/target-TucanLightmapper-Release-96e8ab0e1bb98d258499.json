@@ -15,7 +15,6 @@
 		[
 			"add_executable",
 			"target_link_libraries",
-			"add_definitions",
 			"include_directories"
 		],
 		"files" : 
@@ -36,19 +35,13 @@
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 29,
+				"line" : 27,
 				"parent" : 0
 			},
 			{
 				"command" : 2,
 				"file" : 0,
 				"line" : 25,
-				"parent" : 0
-			},
-			{
-				"command" : 3,
-				"file" : 0,
-				"line" : 27,
 				"parent" : 0
 			}
 		]
@@ -62,17 +55,10 @@
 					"fragment" : "-O3 -DNDEBUG -std=gnu++23 -fdiagnostics-color=always"
 				}
 			],
-			"defines" : 
-			[
-				{
-					"backtrace" : 3,
-					"define" : "_USE_EMBREE"
-				}
-			],
 			"includes" : 
 			[
 				{
-					"backtrace" : 4,
+					"backtrace" : 3,
 					"path" : "C:/Users/redeb/CLionProjects/TucanLightmapper/ThirdParty/glm"
 				},
 				{

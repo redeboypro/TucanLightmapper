@@ -1,4 +1,4 @@
 "C:\Program Files\CMake\bin\cmake.exe" -DCMAKE_BUILD_TYPE=Debug "-DCMAKE_MAKE_PROGRAM=C:/Program Files/JetBrains/CLion 2024.1.1/bin/ninja/win/x64/ninja.exe" -G Ninja -S C:\Users\redeb\CLionProjects\TucanLightmapper -B C:\Users\redeb\CLionProjects\TucanLightmapper\cmake-build-debug
--- Configuring done (0.2s)
+-- Configuring done (0.3s)
 -- Generating done (0.0s)
 -- Build files have been written to: C:/Users/redeb/CLionProjects/TucanLightmapper/cmake-build-debug

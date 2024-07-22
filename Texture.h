@@ -116,7 +116,7 @@ public:
         return false;
     }
 
-    void antialias(const int32_t x, const int32_t y, glm::vec4 &result_col, const float st_denoise = 0.0F) const {
+    void antialias(const int32_t x, const int32_t y, glm::vec4 &result_col, const float st_denoise = 1.0F) const {
         static glm::vec4 tmp_texel_col;
         static float denoise;
 
