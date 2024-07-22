@@ -18,9 +18,9 @@
 #define OCCLUDED(VALUE)       (VALUE != RTC_INVALID_GEOMETRY_ID)
 #define LIGHTMAP_SIZE         255
 #define ITER_NUM              12
-#define AMBIENT_INTENSITY     0.5F
-#define DIR_SAMPLES           64
-#define SOFTNESS              0.3F
+#define AMBIENT_INTENSITY     0.8F
+#define DIR_SAMPLES           32
+#define SHADOW_ANGLE          30.0F
 #define AO_RADIUS             1.0F
 #define ANTIALIAS_PASS_NUM    3
 #define NEAR_CLIP             0.01F

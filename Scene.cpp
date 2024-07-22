@@ -154,6 +154,7 @@ void Scene::load_albedo_from_file(const std::string &file_name) {
 
 void Scene::bake() {
     static glm::vec4 result_col;
+    const float smoothness = std::sin(glm::radians(SHADOW_ANGLE));
     for (int32_t iter = 0; iter < ITER_NUM; ++iter) {
         auto denom = static_cast<float>(iter);
         for (auto &[pixel_coords, normal, ray_origin]: m_patches) {
@@ -173,9 +174,9 @@ void Scene::bake() {
             float occlusion = 0.0F;
             for (int i = 0; i < DIR_SAMPLES; ++i) {
                 glm::vec3 light_dir = m_light_main_dir + glm::vec3(
-                                                                   random_floats(random_engine) * SOFTNESS,
-                                                                   random_floats(random_engine) * SOFTNESS,
-                                                                   random_floats(random_engine) * SOFTNESS
+                                                                   (random_floats(random_engine) * 2.0F - 1.0F) * smoothness,
+                                                                   random_floats(random_engine) * smoothness,
+                                                                   (random_floats(random_engine) * 2.0F - 1.0F) * smoothness
                                                                   );
                 light_dir = normalize(light_dir);
 

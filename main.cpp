@@ -22,7 +22,7 @@
 #define RESOURCES_FOLDER                  "resources\\"
 #define VERTEX_SHADER_FILEPATH            RESOURCES_FOLDER "vert.glsl"
 #define FRAGMENT_SHADER_FILEPATH          RESOURCES_FOLDER "frag.glsl"
-#define MESH_FILENAME                     RESOURCES_FOLDER "mesh_1.bin"
+#define MESH_FILENAME                     RESOURCES_FOLDER "mesh_0.bin"
 #define ALBEDO_TEXTURE_FILENAME           RESOURCES_FOLDER "checker.png"
 
 #define GL_ENABLE_FLAGS                   glEnable(GL_DEPTH_TEST);                            \
